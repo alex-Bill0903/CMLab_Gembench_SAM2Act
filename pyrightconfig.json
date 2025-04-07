@@ -1,0 +1,7 @@
+{
+    "exclude": [
+        "robot-3dlotus/SAM2Act/sam2act/data",
+        "robot-3dlotus/SAM2Act/sam2act/runs",
+        "robot-3dlotus/data",
+    ]
+}

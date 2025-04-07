@@ -1,0 +1,8 @@
+{
+    "exclude": [
+        "SAM2Act/sam2act/data",
+        "SAM2Act/sam2act/runs",
+        "data",
+        "dependencies"
+    ]
+}

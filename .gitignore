@@ -1,0 +1,22 @@
+# Python 
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter notebook checkpoint
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+
+# virtual env
+venv/
+.env/
+
+# dataset
+*.zip
+*.tar.gz
+
+# Mac 
+.DS_Store
+Thumbs.db

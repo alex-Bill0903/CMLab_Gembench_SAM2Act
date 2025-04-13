@@ -21,7 +21,7 @@ pwd; hostname; date
 cd $HOME/Documents/research/CVPR_gembench_baseline/robot-3dlotus
 
 . $HOME/anaconda3/etc/profile.d/conda.sh
-conda activate CVPR_baseline_gembench
+conda activate gembench
 
 export sif_image=/scratch/shichen/singularity_images/nvcuda_v2.sif
 export python_bin=$HOME/anaconda3/envs/CVPR_baseline_gembench/bin/python

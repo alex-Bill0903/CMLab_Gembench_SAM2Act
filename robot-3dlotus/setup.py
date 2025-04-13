@@ -1,4 +1,5 @@
 from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name='genrobo3d',
@@ -6,5 +7,5 @@ setup(
     description='Generalizable robotic manipulation with VLLMs',
     author='Shizhe Chen',
     author_email='cshizhe@gmail.com',
-    packages=['genrobo3d'],
+    packages=find_packages(),
 )

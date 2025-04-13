@@ -14,12 +14,14 @@ conda activate gembench
 # pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 # pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu118
 pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu118
-FORCE_CUDA=1 pip install torch-scatter==2.1.2
+# FORCE_CUDA=1 pip install torch-scatter==2.1.2
+pip install torch-scatter -f https://data.pyg.org/whl/torch-2.3.1+cu118.html
 
 ### if you using 11.8
 export PATH=/usr/local/cuda-11.8/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH
 export CUDA_HOME=/usr/local/cuda-11.8
+export CPATH=$CUDA_HOME/targets/x86_64-linux/include:$CPATH
 ### if you using 11.8
 
 export CUDA_HOME=$HOME/anaconda3/envs/gembench
@@ -117,12 +119,17 @@ Note that for bug-free implementation, we still suggest installing without `xfor
 ```
 pip install -e .
 ```
-Install, required libraries for PyRep, RLBench, YARR, PerAct Colab, and Point Renderer.
+Install, required libraries for  YARR, PerAct Colab, and Point Renderer.
 ```
 pip install -e sam2act/libs/YARR 
 pip install -e sam2act/libs/PERACT_COLAB
 pip install -e sam2act/libs/point-renderer
 ``` 
+
+add SAM2ACT PythonPath
+```
+export PYTHONPATH=/home/bill/Documents/research/CVPR_gembench_baseline/robot-3dlotus/SAM2Act/sam2act:$PYTHONPATH
+```
 
 You may also want to upgrade some packages if there is any error:
 ```
@@ -173,3 +180,39 @@ while using ```pip install -e sam2act/libs/point-renderer```
     pip uninstall nvidia-cublas-cu12 nvidia-cuda-cupti-cu12 nvidia-cuda-nvrtc-cu12 nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-nvtx-cu12 nvidia-nccl-cu12 nvidia-nvjitlink-cu12
 
     ```
+    from torch._C import *  # noqa: F403
+ImportError: libnccl.so.2: cannot open shared object file: No such file or directory
+
+```
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+
+echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" | \
+  sudo tee /etc/apt/sources.list.d/cuda.list
+
+  sudo apt update
+sudo apt install libnccl2 libnccl-dev
+```
+
+
+assert flash_attn is not None, "Make sure flash_attn is installed."
+AssertionError: Make sure flash_attn is installed.
+```
+pip install ninja cmake
+pip uninstall -y flash-attn
+pip cache purge
+python -m pip install --upgrade pip wheel setuptools
+MAX_JOBS=8 python -m pip -v install flash-attn --no-build-isolation
+
+if occur some error like Failed to build flash-attn
+ERROR: Failed to build installable wheels for some pyproject.toml
+## reduce MAX_JOBS num ##
+```
+reference :https://github.com/Dao-AILab/flash-attention/issues/1038
+
+
+
+
+```
+pip uninstall opencv-python
+pip install opencv-python-headless
+```

@@ -108,8 +108,6 @@ pip install -e .
 Install, required libraries for PyRep, RLBench, YARR, PerAct Colab, and Point Renderer.
 ```
 cd SAM2ACT
-pip install -e sam2act/libs/PyRep 
-pip install -e sam2act/libs/RLBench 
 pip install -e sam2act/libs/YARR 
 pip install -e sam2act/libs/peract_colab
 pip install -e sam2act/libs/point-renderer

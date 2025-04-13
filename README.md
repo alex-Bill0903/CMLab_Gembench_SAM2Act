@@ -153,16 +153,15 @@ pip install --upgrade hydra-core
 
 
 
-    ### FAQ ###
-    OSError: /home/bill/anaconda3/envs/CVPR_baseline_gembench/lib/python3.10/site-packages/torch_scatter/_version_cuda.so: undefined symbol: _ZN5torch3jit17parseSchemaOrNameERKSsb
+### FAQ ###
+1. OSError: /home/bill/anaconda3/envs/CVPR_baseline_gembench/lib/python3.10/site-packages/torch_scatter/_version_cuda.so: undefined symbol: _ZN5torch3jit17parseSchemaOrNameERKSsb
 
-    ```
-    FORCE_CUDA=1 pip install torch_scatter==2.1.2
-    ```
+    ```FORCE_CUDA=1 pip install torch_scatter==2.1.2```
+    
 
 
-    assert flash_attn is not None, "Make sure flash_attn is installed."
-    AssertionError: Make sure flash_attn is installed.
+2. assert flash_attn is not None, "Make sure flash_attn is installed."
+AssertionError: Make sure flash_attn is installed.
 
     ```
     pip install flash_attn==2.5.9.post1
@@ -170,7 +169,7 @@ pip install --upgrade hydra-core
 
 
 
-while using ```pip install -e sam2act/libs/point-renderer```
+3. while using ```pip install -e sam2act/libs/point-renderer```
 
     The detected CUDA version (11.8) mismatches the version that was used to compile
     PyTorch (12.1). Please make sure to use the same CUDA versions.
@@ -180,39 +179,42 @@ while using ```pip install -e sam2act/libs/point-renderer```
     pip uninstall nvidia-cublas-cu12 nvidia-cuda-cupti-cu12 nvidia-cuda-nvrtc-cu12 nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-nvtx-cu12 nvidia-nccl-cu12 nvidia-nvjitlink-cu12
 
     ```
-    from torch._C import *  # noqa: F403
+
+4. from torch._C import *  # noqa: F403
 ImportError: libnccl.so.2: cannot open shared object file: No such file or directory
 
-```
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+    ```
+    sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
 
-echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" | \
-  sudo tee /etc/apt/sources.list.d/cuda.list
+    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" | \
+    sudo tee /etc/apt/sources.list.d/cuda.list
 
-  sudo apt update
-sudo apt install libnccl2 libnccl-dev
-```
+    sudo apt update
+    sudo apt install libnccl2 libnccl-dev
+    ```
 
 
-assert flash_attn is not None, "Make sure flash_attn is installed."
+5. assert flash_attn is not None, "Make sure flash_attn is installed."
 AssertionError: Make sure flash_attn is installed.
-```
-pip install ninja cmake
-pip uninstall -y flash-attn
-pip cache purge
-python -m pip install --upgrade pip wheel setuptools
-MAX_JOBS=8 python -m pip -v install flash-attn --no-build-isolation
+    ```
+    pip install ninja cmake
+    pip uninstall -y flash-attn
+    pip cache purge
+    python -m pip install --upgrade pip wheel setuptools
+    MAX_JOBS=8 python -m pip -v install flash-attn --no-build-isolation
+    ```
 
-if occur some error like Failed to build flash-attn
-ERROR: Failed to build installable wheels for some pyproject.toml
-## reduce MAX_JOBS num ##
-```
-reference :https://github.com/Dao-AILab/flash-attention/issues/1038
+    if occur some error like Failed to build flash-attn
+    ERROR: Failed to build installable wheels for some pyproject.toml
+    **reduce MAX_JOBS num**
+
+    reference :https://github.com/Dao-AILab/flash-attention/issues/1038
 
 
 
 
-```
-pip uninstall opencv-python
-pip install opencv-python-headless
-```
+6. if having some QT problem, try
+    ```
+    pip uninstall opencv-python
+    pip install opencv-python-headless
+    ```

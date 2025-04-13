@@ -14,6 +14,12 @@ conda activate gembench
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 FORCE_CUDA=1 pip install torch-scatter==2.1.2
 
+### if you using 11.8
+export PATH=/usr/local/cuda-11.8/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH
+export CUDA_HOME=/usr/local/cuda-11.8
+### if you using 11.8
+
 export CUDA_HOME=$HOME/anaconda3/envs/gembench
 export CPATH=$CUDA_HOME/targets/x86_64-linux/include:$CPATH
 export LD_LIBRARY_PATH=$CUDA_HOME/targets/x86_64-linux/lib:$LD_LIBRARY_PATH
@@ -111,7 +117,7 @@ pip install -e .
 Install, required libraries for PyRep, RLBench, YARR, PerAct Colab, and Point Renderer.
 ```
 pip install -e sam2act/libs/YARR 
-pip install -e sam2act/libs/peract_colab
+pip install -e sam2act/libs/PERACT_COLAB
 pip install -e sam2act/libs/point-renderer
 ``` 
 
@@ -135,3 +141,32 @@ pip install --upgrade hydra-core
 
     - For experiments on MemoryBench, we also provide a [pre-generated dataset](https://huggingface.co/datasets/hqfang/MemoryBench). Please download and place them under `SAM2Act/sam2act/data_memory/xxx` where `xxx` is either `train` or `test`.  
 
+
+
+    ### FAQ ###
+    OSError: /home/bill/anaconda3/envs/CVPR_baseline_gembench/lib/python3.10/site-packages/torch_scatter/_version_cuda.so: undefined symbol: _ZN5torch3jit17parseSchemaOrNameERKSsb
+
+    ```
+    pip install torch_scatter==2.1.2
+    ```
+
+
+    assert flash_attn is not None, "Make sure flash_attn is installed."
+    AssertionError: Make sure flash_attn is installed.
+
+    ```
+    pip install flash_attn==2.5.9.post1
+    ```
+
+
+
+while using ```pip install -e sam2act/libs/point-renderer```
+
+    The detected CUDA version (11.8) mismatches the version that was used to compile
+    PyTorch (12.1). Please make sure to use the same CUDA versions.
+
+
+    ```
+    pip uninstall nvidia-cublas-cu12 nvidia-cuda-cupti-cu12 nvidia-cuda-nvrtc-cu12 nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-nvtx-cu12 nvidia-nccl-cu12 nvidia-nvjitlink-cu12
+
+    ```

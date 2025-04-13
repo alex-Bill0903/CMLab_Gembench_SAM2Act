@@ -85,7 +85,10 @@ pip install -e .
 cd ../..
 ```
 
-
+### Install SAM2ACT ###
+```
+cd SAM2ACT
+```
 Install PyTorch3D.
 
 The original RVT repository recommends that you can skip this step if you just want to use RVT-2 backbone and its custom Point-Renderer for rendering. If you want to try out RVT backbone or different renderer, PyTorch3D is required. However, we still recommend installing this as there are some nested dependencies that requires PyTorch3D package.
@@ -107,7 +110,6 @@ pip install -e .
 ```
 Install, required libraries for PyRep, RLBench, YARR, PerAct Colab, and Point Renderer.
 ```
-cd SAM2ACT
 pip install -e sam2act/libs/YARR 
 pip install -e sam2act/libs/peract_colab
 pip install -e sam2act/libs/point-renderer

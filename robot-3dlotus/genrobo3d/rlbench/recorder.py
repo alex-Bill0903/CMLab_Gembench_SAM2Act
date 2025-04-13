@@ -80,61 +80,6 @@ class TaskRecorder(object):
 
     #     self._snaps = {cam_name: [] for cam_name in self._cams_motion.keys()}
     
-    
-    # def save(self, path):
-    #     print('Converting to video ...')
-    #     path = Path(path)
-    #     path.mkdir(exist_ok=True)
-    #     import cv2
-    #     import subprocess
-    #     import shutil
-    #     import tempfile
-
-    #     # 檢查 ffmpeg 是否可用
-    #     if shutil.which("ffmpeg") is None:
-    #         raise RuntimeError("ffmpeg not found in system PATH. Please install ffmpeg first.")
-
-    #     for cam_name, cam_motion in self._cams_motion.items():
-    #         frames = self._snaps[cam_name]
-    #         if not frames:
-    #             continue
-
-    #         resolution = tuple(cam_motion.cam.get_resolution())
-            
-    #         # 創建臨時目錄保存幀圖像
-    #         with tempfile.TemporaryDirectory() as temp_dir:
-    #             # 寫入臨時圖像序列
-    #             for i, frame in enumerate(frames):
-    #                 # OpenCV 的顏色順序已經是 BGR，直接寫入
-    #                 cv2.imwrite(os.path.join(temp_dir, f"frame_{i:05d.png}"), frame)
-
-    #             # 設置輸出路徑
-    #             output_path = str(path / f"{cam_name}.mp4")
-                
-    #             # 構造 ffmpeg 命令
-    #             ffmpeg_cmd = [
-    #                 'ffmpeg', '-y',  # -y 覆蓋已存在文件
-    #                 '-framerate', str(self._fps),
-    #                 '-i', os.path.join(temp_dir, 'frame_%05d.png'),  # 輸入圖像序列
-    #                 '-c:v', 'libx264',  # 使用 H.264 編碼
-    #                 '-vf', f'scale={resolution[0]}:{resolution[1]}',  # 確保解析度
-    #                 '-pix_fmt', 'yuv420p',  # 兼容性格式
-    #                 '-preset', 'fast',  # 編碼速度與質量平衡
-    #                 '-crf', '23',       # 質量參數 (0-51, 越低質量越好)
-    #                 output_path
-    #             ]
-                
-    #             # 執行命令並捕獲輸出
-    #             try:
-    #                 subprocess.run(ffmpeg_cmd, check=True, 
-    #                             stdout=subprocess.PIPE, 
-    #                             stderr=subprocess.PIPE)
-    #             except subprocess.CalledProcessError as e:
-    #                 print(f"FFmpeg 錯誤: {e.stderr.decode()}")
-    #                 raise
-
-    #     self._snaps = {cam_name: [] for cam_name in self._cams_motion.keys()}
-    
     def save(self, path):
         import shutil
         import cv2

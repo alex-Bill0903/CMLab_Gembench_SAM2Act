@@ -1,2 +1,137 @@
 # CMLab_Gembench_SAM2Act
 gembench with sam2act
+
+# Installation Instructions
+
+1. Install general python packages
+```bash
+conda create -n gembench python==3.10
+
+conda activate gembench
+
+# On CLEPS, first run `module load gnu12/12.2.0`
+
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+FORCE_CUDA=1 pip install torch-scatter==2.1.2
+
+export CUDA_HOME=$HOME/anaconda3/envs/gembench
+export CPATH=$CUDA_HOME/targets/x86_64-linux/include:$CPATH
+export LD_LIBRARY_PATH=$CUDA_HOME/targets/x86_64-linux/lib:$LD_LIBRARY_PATH
+export PATH=$CUDA_HOME/bin:$PATH
+
+pip install -r requirements.txt
+
+# install genrobo3d
+pip install -e .
+```
+
+2. Install RLBench
+```bash
+mkdir dependencies
+cd dependencies
+```
+
+Download CoppeliaSim (see instructions [here](https://github.com/stepjam/PyRep?tab=readme-ov-file#install))
+```bash
+# change the version if necessary
+wget https://www.coppeliarobotics.com/files/V4_1_0/CoppeliaSim_Edu_V4_1_0_Ubuntu20_04.tar.xz
+tar -xvf CoppeliaSim_Edu_V4_1_0_Ubuntu20_04.tar.xz
+```
+
+Add the following to your ~/.bashrc file:
+```bash
+export COPPELIASIM_ROOT=$(pwd)/CoppeliaSim_Edu_V4_1_0_Ubuntu20_04
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$COPPELIASIM_ROOT
+export QT_QPA_PLATFORM_PLUGIN_PATH=$COPPELIASIM_ROOT
+export DISPLAY=:1.0
+```
+
+Install Pyrep and RLBench
+```bash
+git clone https://github.com/cshizhe/PyRep.git
+cd PyRep
+pip install -r requirements.txt
+pip install .
+cd ..
+
+# Our modified version of RLBench to support new tasks in GemBench
+git clone https://github.com/rjgpinel/RLBench
+cd RLBench
+pip install -r requirements.txt
+pip install .
+cd ../..
+```
+
+3. Install model dependencies
+
+```bash
+cd dependencies
+
+# Please ensure to set CUDA_HOME beforehand as specified in the export const of the section 1
+git clone https://github.com/cshizhe/chamferdist.git
+cd chamferdist
+python setup.py install
+cd ..
+
+git clone https://github.com/cshizhe/Pointnet2_PyTorch.git
+cd Pointnet2_PyTorch/pointnet2_ops_lib
+python setup.py install
+cd ../..
+
+# llama3: needed for 3D-LOTUS++
+git clone https://github.com/cshizhe/llama3.git
+cd llama3
+pip install -e .
+cd ../..
+```
+
+
+Install PyTorch3D.
+
+The original RVT repository recommends that you can skip this step if you just want to use RVT-2 backbone and its custom Point-Renderer for rendering. If you want to try out RVT backbone or different renderer, PyTorch3D is required. However, we still recommend installing this as there are some nested dependencies that requires PyTorch3D package.
+
+One recommended version that is compatible with the rest of the library can be installed as follows. Note that this might take some time. For more instructions visit [here](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md).
+```
+FORCE_CUDA=1 pip install 'git+https://github.com/facebookresearch/pytorch3d.git@stable'
+```
+
+install sam2act and other submodules.
+
+To locally install the repository, you can either `pip install -e '.[xformers]'` to install the library with [xformers](https://github.com/facebookresearch/xformers) or `pip install -e .` to install without it. We recommend using the former as improves speed. However, sometimes the installation might fail due to the xformers dependency. In that case, you can install the library without xformers. The performance difference between the two is minimal but speed could be slower without xformers.
+```
+pip install -e '.[xformers]' 
+```
+Note that for bug-free implementation, we still suggest installing without `xformers` as below.
+```
+pip install -e .
+```
+Install, required libraries for PyRep, RLBench, YARR, PerAct Colab, and Point Renderer.
+```
+cd SAM2ACT
+pip install -e sam2act/libs/PyRep 
+pip install -e sam2act/libs/RLBench 
+pip install -e sam2act/libs/YARR 
+pip install -e sam2act/libs/peract_colab
+pip install -e sam2act/libs/point-renderer
+``` 
+
+You may also want to upgrade some packages if there is any error:
+```
+pip install --upgrade hydra-core
+``` 
+ 
+4. Download SAM2 weights and dataset.
+    - Before starting, download SAM2 pretrained weights for loading SAM2Act using the following command.
+    ```
+    cd sam2act/mvt/sam2_train/checkpoints
+    download_ckpts.sh
+    ``` 
+
+    - For experiments on RLBench, we use [pre-generated dataset](https://drive.google.com/drive/folders/0B2LlLwoO3nfZfkFqMEhXWkxBdjJNNndGYl9uUDQwS1pfNkNHSzFDNGwzd1NnTmlpZXR1bVE?resourcekey=0-jRw5RaXEYRLe2W6aNrNFEQ) provided by [PerAct](https://github.com/peract/peract#download). If downloading from Google Drive encounters any limits, we also provide a mirror of the same dataset in [Hugging Face](https://huggingface.co/datasets/hqfang/RLBench-18-Tasks). Please download and place them under `SAM2Act/sam2act/data/xxx` where `xxx` is either `train`, `test`, or `val`.  
+
+    - Additionally, building upon PerAct's dataloader, we create a new dataloader that can sample observation sequences of a given size, and it also supports the same functionality as PerAct's. Same as PerAct, our dataloader is also based on [YARR](https://github.com/stepjam/YARR). YARR creates a replay buffer on the fly which can increase the startup time. We provide an option to directly load the replay buffer from the disk. We recommend using the pre-generated replay buffer (98 GB) as it reduces the startup time. You can download replay buffer for [indidual tasks](https://huggingface.co/datasets/hqfang/SAM2Act/tree/main/replay_temporal/replay_train). After downloading, uncompress the replay buffer(s) (for example using the command `tar -xf <task_name>.tar.xz`) and place it under `SAM2Act/sam2act/replay_temporal/replay_xxx` where `xxx` is `train` (for now we only provide replay buffer for trianing split). Note that is useful only if you want to train SAM2Act from scratch and not needed if you want to evaluate the pre-trained model.
+
+    - If you prefer using dataloader same as PerAct's, you can refer to the step 6 of this [instruction](https://github.com/NVlabs/RVT?tab=readme-ov-file#getting-started). You also need to change `get_dataset_temporal` to `get_dataset` in `train.py`. Again, note that this is not necessary because our dataloader preserves all functionality of PerAct's.
+
+    - For experiments on MemoryBench, we also provide a [pre-generated dataset](https://huggingface.co/datasets/hqfang/MemoryBench). Please download and place them under `SAM2Act/sam2act/data_memory/xxx` where `xxx` is either `train` or `test`.  
+

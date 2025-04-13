@@ -11,7 +11,9 @@ conda activate gembench
 
 # On CLEPS, first run `module load gnu12/12.2.0`
 
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu118
+pip install torch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu118
 FORCE_CUDA=1 pip install torch-scatter==2.1.2
 
 ### if you using 11.8
@@ -25,6 +27,7 @@ export CPATH=$CUDA_HOME/targets/x86_64-linux/include:$CPATH
 export LD_LIBRARY_PATH=$CUDA_HOME/targets/x86_64-linux/lib:$LD_LIBRARY_PATH
 export PATH=$CUDA_HOME/bin:$PATH
 
+cd robot-3dlotus
 pip install -r requirements.txt
 
 # install genrobo3d
@@ -93,7 +96,7 @@ cd ../..
 
 ### Install SAM2ACT ###
 ```
-cd SAM2ACT
+cd SAM2Act
 ```
 Install PyTorch3D.
 
@@ -147,7 +150,7 @@ pip install --upgrade hydra-core
     OSError: /home/bill/anaconda3/envs/CVPR_baseline_gembench/lib/python3.10/site-packages/torch_scatter/_version_cuda.so: undefined symbol: _ZN5torch3jit17parseSchemaOrNameERKSsb
 
     ```
-    pip install torch_scatter==2.1.2
+    FORCE_CUDA=1 pip install torch_scatter==2.1.2
     ```
 
 

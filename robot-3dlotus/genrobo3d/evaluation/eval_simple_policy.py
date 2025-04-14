@@ -32,101 +32,7 @@ from genrobo3d.configs.rlbench.constants import get_robot_workspace, get_rlbench
 from genrobo3d.utils.robot_box import RobotBox
 from genrobo3d.train.datasets.common import gen_seq_masks
 from genrobo3d.evaluation.common import write_to_file
-
-import cv2
-def process_image(np_img, device, scale=0.5):
-    # """
-    # 將輸入的 numpy 陣列圖片轉換為 torch tensor，
-    # 並將其維度轉換為 (1, 3, new_H, new_W)
-    
-    # 參數:
-    #   np_img: numpy array, shape (H, W, 3)
-    #   device: 要轉移到的設備 (例如 'cuda:0')
-    #   scale: 尺寸縮放比例 (256*scale -> 128, scale=0.5)
-    # """
-    # # 轉換為 float tensor
-    # # 如果原始圖片為 uint8，轉換為 float 並除以 255 進行歸一化
-    # # img = torch.from_numpy(np_img).float() / 255.0  
-    # img = torch.from_numpy(np_img).float() / 255.0  
-    # # 調整維度順序: (H, W, 3) -> (3, H, W)
-    # img = img.permute(2, 0, 1)
-    # # 增加 batch 維度: (3, H, W) -> (1, 3, H, W)
-    # img = img.unsqueeze(0)
-    # # 縮放尺寸到期望大小, 例如 (256,256) -> (128,128)
-    # # 注意：如果 scale 固定為 0.5, 你可以直接指定 size=(128,128)
-    # new_H = int(img.shape[2] * scale)
-    # new_W = int(img.shape[3] * scale)
-    # img = F.interpolate(img, size=(new_H, new_W), mode='bilinear', align_corners=False)
-    # # 移動到指定設備
-    # img = img.to(device)
-    # return img
-    """
-    將輸入的 numpy 陣列圖片縮放並轉換為新的 numpy 陣列。
-    
-    參數:
-      np_img: numpy array, shape (H, W, 3)，原始圖片 (H 高度, W 寬度, 3 顏色通道)
-      scale: 尺寸縮放比例 (256*scale -> 128, scale=0.5)
-    
-    返回:
-      np_img_resized: numpy array, shape (new_H, new_W, 3)，縮放後的圖片
-    """
-    # 轉換為 float 並歸一化
-    img = np_img.astype(np.float32) / 255.0  # 像素範圍從 [0, 255] -> [0.0, 1.0]
-    
-    # 縮放尺寸到期望大小, 例如 (256, 256) -> (128, 128)
-    new_H = int(img.shape[0] * scale)
-    new_W = int(img.shape[1] * scale)
-    
-    # 使用 cv2 來進行圖像縮放
-    img_resized = cv2.resize(img, (new_W, new_H), interpolation=cv2.INTER_LINEAR)
-    
-    # 恢復到 [0, 255] 範圍並轉換為 uint8
-    img_resized = np.clip(img_resized * 255.0, 0, 255).astype(np.uint8)
-    
-    return np.transpose(img_resized, (2, 0, 1))  # (H, W, C) -> (C, H, W)
-
-from scipy.ndimage import zoom
-
-def resize_point_cloud(pc, scale=0.5):
-    """
-    將單張點雲圖片（numpy array, shape (256,256,3)）縮小到 (128,128,3)
-    使用 scipy.ndimage.zoom 進行線性插值。
-    """
-    # scale factors: height and width 乘上 scale，通道保持1
-    scale_factors = (scale, scale, 1)
-    pc_resized = zoom(pc, scale_factors, order=1)  # order=1 為線性插值
-    return np.transpose(pc_resized, (2, 0, 1))
-
-# from scipy.ndimage import zoom
-# def process_image(np_img, scale=0.5):
-#     """
-#     將輸入的 numpy 陣列圖片縮放並轉換為新的 numpy 陣列。
-
-#     參數:
-#       np_img: numpy array, shape (H, W, 3)，原始圖片 (H 高度, W 寬度, 3 顏色通道)
-#       scale: 尺寸縮放比例 (256*scale -> 128, scale=0.5)
-
-#     返回:
-#       np_img_resized: numpy array, shape (new_H, new_W, 3)，縮放後的圖片
-#     """
-#     # 轉換為 float 並歸一化
-#     img = np_img.astype(np.float32) / 255.0  # 像素範圍從 [0, 255] -> [0.0, 1.0]
-
-#     # 計算縮放後的尺寸
-#     new_H = int(img.shape[0] * scale)
-#     new_W = int(img.shape[1] * scale)
-
-#     # 使用 scipy.ndimage.zoom 來進行圖像縮放
-#     img_resized = np.zeros((new_H, new_W, img.shape[2]), dtype=np.float32)
-    
-#     # 分別對每個通道進行縮放
-#     for i in range(img.shape[2]):
-#         img_resized[:, :, i] = zoom(img[:, :, i], (scale, scale), order=1)  # 使用線性插值
-
-#     # 恢復到 [0, 255] 範圍並轉換為 uint8
-#     img_resized = np.clip(img_resized * 255.0, 0, 255).astype(np.uint8)
-
-#     return img_resized
+from genrobo3d.utils.resize_input_rgb_pc import process_image, resize_point_cloud
 
 
 class Arguments(tap.Tap):
@@ -516,23 +422,25 @@ class Actioner(object):
         low_dim_state = [np.array([gripper_open, 0.0, 0.0, time_param], dtype=np.float32)]
         policy_obs["low_dim_state"] = low_dim_state
 
-        #print("hello instructions = ", instructions)
+
+        # print("original instructions type = ", type(instructions))
+        # print("original instructions[0] type = ", type(instructions[0]))
+        # print("original instructions = ", instructions)
         # 4. 取得 lang_goal_tokens，利用 clip.tokenize 處理 instructions
         if isinstance(instructions, list):
-            instructions = ", ".join(instructions)
-        # print("hello instructions = ", instructions)
+            instructions = instructions[0]
+            # instructions = ", ".join(instructions)
+            
+        # print("instructions type = ", type(instructions))
+        # print("instructions = ", instructions)
+            
         from clip import tokenize
-        # if instructions is not None:
-        #     lang_goal_tokens = tokenize([instructions]).long().to(self.device) 
-        # else:
-        #     lang_goal_tokens = torch.tensor([]).long()
         if instructions is not None:
             lang_goal_tokens = tokenize([instructions])
         else:
             lang_goal_tokens = np.array([])
         policy_obs["lang_goal_tokens"] = lang_goal_tokens
         
-        #print('my predict???')
         
         # 呼叫 policy 函式 act，load agent
         # from sam2act.eval import load_agent
@@ -545,15 +453,8 @@ class Actioner(object):
         #     use_input_place_with_mean=False,
         # )
         
-        
-        # step_id 這裡作為 step 的參數傳入
-        # prepped_data = {
-        #     k: v if isinstance(v, torch.Tensor) else torch.tensor(v, device=self.device)
-        #     for k, v in policy_obs.items()
-        # }
-        # print("policy_obs[front_pc] shape = ", policy_obs['front_point_cloud'].shape)
+       
         prepped_data = {k: torch.tensor(np.array([v]), device=self.device) for k, v in policy_obs.items()}
-        # print("prepped_data shape = ", prepped_data['front_point_cloud'].shape)
         act_result = self.agent.act(step=step_id, observation=prepped_data, deterministic=True)
         
         # 擷取 act_result.action 前 8 個資訊（預期 act_result.action 為 numpy array）

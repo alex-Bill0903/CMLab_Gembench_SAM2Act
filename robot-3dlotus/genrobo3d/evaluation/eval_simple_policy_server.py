@@ -205,7 +205,12 @@ def producer_fn(proc_id, k_res, args, taskvar, pred_file, batch_queue, result_qu
                 break
         
         if args.record_video: # and reward < 1:
-            tr.save(os.path.join(video_log_dir, f"{demo_id}_SR{reward}"))
+            save_video_dir = os.path.join(video_log_dir, f"{demo_id}_SR{reward}")
+            os.makedirs(save_video_dir, exist_ok=True)
+            tr.save(os.path.join(save_video_dir))
+            
+            with open(os.path.join(save_video_dir, "instruction.json"), 'w') as f:
+                json.dump(instructions, f, indent=2)
 
         print(
             taskvar, "Demo", demo_id, 'Step', step_id+1,

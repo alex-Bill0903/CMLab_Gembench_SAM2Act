@@ -170,6 +170,9 @@ def producer_fn(proc_id, k_res, args, taskvar, pred_file, batch_queue, result_qu
 
         obs_state_dict = env.get_observation(obs)  # type: ignore
         move.reset(obs_state_dict['gripper'])
+        
+        # Create a dictionary to record actions at each step
+        action_log = {}
 
         for step_id in range(args.max_steps):
             # fetch the current observation, and predict one action
@@ -188,6 +191,9 @@ def producer_fn(proc_id, k_res, args, taskvar, pred_file, batch_queue, result_qu
 
             if action is None:
                 break
+            
+            # Record the action for the current step. Convert numpy array to list for JSON serialization.
+            action_log[f'step_{step_id}'] = action.tolist() if hasattr(action, 'tolist') else action
 
             # update the observation based on the predicted action
             try:
@@ -211,6 +217,10 @@ def producer_fn(proc_id, k_res, args, taskvar, pred_file, batch_queue, result_qu
             
             with open(os.path.join(save_video_dir, "instruction.json"), 'w') as f:
                 json.dump(instructions, f, indent=2)
+                
+            # Save the action log as a JSON file in the same folder
+            with open(os.path.join(save_video_dir, "action_log.json"), 'w') as f:
+                json.dump(action_log, f, indent=2)
 
         print(
             taskvar, "Demo", demo_id, 'Step', step_id+1,

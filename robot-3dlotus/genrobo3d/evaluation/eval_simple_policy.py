@@ -301,13 +301,15 @@ class Actioner(object):
     #     self, task_str=None, variation=None, step_id=None, obs_state_dict=None, 
     #     episode_id=None, instructions=None,
     # ):
-    #     with open("/home/bill/Documents/research/CVPR_gembench_baseline/3dlotus.txt", "a") as file:
-    #         print('hello7777')
-    #         print('obs_state_dict keys = ', obs_state_dict.keys(), file=file)
-    #         print('obs_state_dict rgb shape = ', obs_state_dict['rgb'].shape, file=file)
-    #         print('obs_state_dict pc shape = ', obs_state_dict['pc'].shape, file=file)
-    #         print('obs_state_dict = ', obs_state_dict, file=file)
-    #         print('instructions = ', instructions, file=file)
+    #     # with open("/home/bill/Documents/research/CVPR_gembench_baseline/3dlotus.txt", "a") as file:
+    #     #     print('hello7777')
+    #     #     print('obs_state_dict keys = ', obs_state_dict.keys(), file=file)
+    #     #     print('obs_state_dict rgb shape = ', obs_state_dict['rgb'].shape, file=file)
+    #     #     print('obs_state_dict pc shape = ', obs_state_dict['pc'].shape, file=file)
+    #     #     print('obs_state_dict = ', obs_state_dict, file=file)
+    #     #     print('instructions = ', instructions, file=file)
+        
+    #     instructions = []
     #     taskvar = f'{task_str}+{variation}'
     #     batch = self.preprocess_obs(
     #         taskvar, step_id, obs_state_dict,
@@ -349,14 +351,14 @@ class Actioner(object):
     #                 'action': action
     #             }
     #         )
-    #     with open("/home/bill/Documents/research/CVPR_gembench_baseline/3dlotus.txt", "a") as file:
-    #         print('out type = ', type(out), file=file)
-    #         print('out keys = ', out.keys(), file=file)
-    #         print('out action = ', out['action'], file=file)
-    #         print('out action shape = ', out['action'].shape, file=file)
-    #         print('out action type = ', type(out['action']), file=file)
-    #         print('out = ', out, file=file)
-    #         print("~~~~~~~~~~~~~~~~~~")
+    #     # with open("/home/bill/Documents/research/CVPR_gembench_baseline/3dlotus.txt", "a") as file:
+    #     #     print('out type = ', type(out), file=file)
+    #     #     print('out keys = ', out.keys(), file=file)
+    #     #     print('out action = ', out['action'], file=file)
+    #     #     print('out action shape = ', out['action'].shape, file=file)
+    #     #     print('out action type = ', type(out['action']), file=file)
+    #     #     print('out = ', out, file=file)
+    #     #     print("~~~~~~~~~~~~~~~~~~")
     #     return out
     
     def predict(
@@ -428,6 +430,7 @@ class Actioner(object):
         # print("original instructions = ", instructions)
         # 4. 取得 lang_goal_tokens，利用 clip.tokenize 處理 instructions
         if isinstance(instructions, list):
+            # TODO: simply use the first one (might be better to use the longest one)
             instructions = instructions[0]
             # instructions = ", ".join(instructions)
             
@@ -460,6 +463,7 @@ class Actioner(object):
         # 擷取 act_result.action 前 8 個資訊（預期 act_result.action 為 numpy array）
         full_action = act_result.action  # 例如 shape 為 (N,) 的 numpy array
         action = full_action[:8]
+        # action[2] = max(action[2], self.TABLE_HEIGHT+0.005)
         # print("action = ", action)
         # 回傳 predict 的格式
         return {"action": action}

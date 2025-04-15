@@ -10,7 +10,7 @@ import argparse
 split_names = ['taskvars_train', 'taskvars_test_l2', 'taskvars_test_l3', 'taskvars_test_l4']
 
 def main(args):
-    # 若使用者未指定 output，則預設為 {result_dir}/evaluation_output.txt
+    # default {result_dir}/evaluation_output.txt
     if not args.output:
         args.output = os.path.join(args.result_dir, "evaluation_output.txt")
     
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('ckpt_step', type=int, help="Checkpoint step to filter results")
     parser.add_argument('--seeds', type=int, nargs='+', default=[200, 300, 400, 500, 600],
                         help="List of seeds to load")
-    # 將 --output 預設設定為空字串，並在程式中根據 result_dir 做出預設值
+   
     parser.add_argument('--output', type=str, default="",
                         help="Output file to write the results. Default: {result_dir}/evaluation_output.txt")
     args = parser.parse_args()

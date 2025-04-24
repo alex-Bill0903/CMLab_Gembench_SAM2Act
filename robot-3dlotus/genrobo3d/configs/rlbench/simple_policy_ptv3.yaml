@@ -3,6 +3,7 @@ output_dir: 'data/experiments/gembench/simple_policy_ptv3/debug'
 tfboard_log_dir: null # 'data/TFBoard/xxx'
 checkpoint: null
 checkpoint_strict_load: False # true, false
+world_size: 1
 
 TRAIN:
   resume_training: True

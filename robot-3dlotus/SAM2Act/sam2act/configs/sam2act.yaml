@@ -1,7 +1,7 @@
 exp_id: sam2act
 exp_name: test
 wandb: True
-tasks: all
+tasks: gembench
 agent: our
 demo: 100
 bs: 8

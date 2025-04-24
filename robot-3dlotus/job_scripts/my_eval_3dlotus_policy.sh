@@ -35,22 +35,23 @@ expr_dir=data/experiments/gembench/3dlotus/v1
 ckpt_step=150000
 
 # validation
-python genrobo3d/evaluation/eval_simple_policy_server.py \
-    --expr_dir ${expr_dir} --ckpt_step ${ckpt_step} --num_workers 4 \
-    --taskvar_file assets/taskvars_train.json \
-    --seed 100 --num_demos 20 \
-    --microstep_data_dir data/gembench/val_dataset/microsteps/seed100 \
-    --video_dir data/experiments/gembench/3dlotus/v1/preds/seed100/record_video \
-    --record_video
+# python genrobo3d/evaluation/eval_simple_policy_server.py \
+#     --expr_dir ${expr_dir} --ckpt_step ${ckpt_step} --num_workers 4 \
+#     --taskvar_file assets/taskvars_train.json \
+#     --seed 100 --num_demos 20 \
+#     --microstep_data_dir data/gembench/val_dataset/microsteps/seed100 \
+#     --video_dir data/experiments/gembench/3dlotus/v1/preds/seed100/record_video \
+#     --record_video
 # test
 for seed in {200..600..100}
 do
-for split in train test_l2 test_l3 test_l4
+# for split in train test_l2 test_l3 test_l4
+for split in test_l4
 do
 python genrobo3d/evaluation/eval_simple_policy_server.py \
     --expr_dir ${expr_dir} --ckpt_step ${ckpt_step} --num_workers 4 \
     --taskvar_file assets/taskvars_${split}.json \
-    --seed ${seed} --num_demos 20 \
+    --seed ${seed} --num_demos 10 \
     --microstep_data_dir data/gembench/test_dataset/microsteps/seed${seed} \
     --video_dir data/experiments/gembench/3dlotus/v1/preds/seed${seed}/record_video \
     --record_video

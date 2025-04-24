@@ -249,6 +249,39 @@ RLBENCH_TASKS = [
     "stack_cups",
 ]
 
+GEMBENCH_TASKS = [
+    "close_fridge+0",
+    "close_jar_peract+15",
+    "close_jar_peract+16",
+    "close_laptop_lid+0",
+    "close_microwave+0",
+    "light_bulb_in_peract+17",
+    "light_bulb_in_peract+19",
+    "open_box+0",
+    "open_door+0",
+    "open_drawer+0",
+    "open_drawer+2",
+    "pick_and_lift+0",
+    "pick_and_lift+2",
+    "pick_and_lift+7",
+    "pick_up_cup+11",
+    "pick_up_cup+8",
+    "pick_up_cup+9",
+    "push_button+0",
+    "push_button+3",
+    "push_button+4",
+    "put_groceries_in_cupboard+0",
+    "put_groceries_in_cupboard+3",
+    "put_money_in_safe+0",
+    "put_money_in_safe+1",
+    "reach_and_drag_peract+14",
+    "reach_and_drag_peract+18",
+    "slide_block_to_color_target_peract+0",
+    "slide_block_to_color_target_peract+1",
+    "stack_blocks+30",
+    "stack_blocks+36",
+    "stack_blocks+39",
+]
 
 def load_agent(agent_path, agent=None, only_epoch=False):
     if isinstance(agent, PreprocessAgent2):

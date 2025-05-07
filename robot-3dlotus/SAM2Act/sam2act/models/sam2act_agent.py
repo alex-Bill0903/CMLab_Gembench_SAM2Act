@@ -879,18 +879,30 @@ class SAM2Act_Agent:
     def act(
         self, step: int, observation: dict, deterministic=True, pred_distri=False
     ) -> ActResult:
-        with open("/home/bill/Documents/research/CVPR_gembench_baseline/my_input_sam2act.txt", "w") as file:
-            print('observation["lang_goal_tokens"] type = ', type(observation["lang_goal_tokens"]), file=file)
-            print('observation["lang_goal_tokens"] shape = ', observation["lang_goal_tokens"].shape, file=file)
-            print('observation["low_dim_state"] type = ', type(observation["low_dim_state"]), file=file)
-            print('observation["low_dim_state"] shape = ', observation["low_dim_state"].shape, file=file)
-            print('observation["left_shoulder_rgb"] type = ', type(observation["left_shoulder_rgb"]), file=file)
-            print('observation["left_shoulder_rgb"] shape = ', observation["left_shoulder_rgb"].shape, file=file)
-            print('observation["left_shoulder_point_cloud"] type = ', type(observation["left_shoulder_point_cloud"]), file=file)
-            print('observation["left_shoulder_point_cloud"] shape = ', observation["left_shoulder_point_cloud"].shape, file=file)
-            print('observation["ignore_collisions"] type = ', type(observation["ignore_collisions"]), file=file)
-            print('observation["ignore_collisions"] shape = ', observation["ignore_collisions"].shape, file=file)
-            print('observation', observation, file=file)
+        # print('step = ', step)
+        # print('observation["low_dim_state"] = ', observation["low_dim_state"])
+        # print()
+        # with open("/home/bill/Documents/research/my_gembench_input_sam2act.txt", "a") as file:
+        #     # print('observation["lang_goal_tokens"] type = ', type(observation["lang_goal_tokens"]), file=file)
+        #     # print('observation["lang_goal_tokens"] shape = ', observation["lang_goal_tokens"].shape, file=file)
+        #     # print('observation["low_dim_state"] type = ', type(observation["low_dim_state"]), file=file)
+        #     # print('observation["low_dim_state"] shape = ', observation["low_dim_state"].shape, file=file)
+        #     # print('observation["left_shoulder_rgb"] type = ', type(observation["left_shoulder_rgb"]), file=file)
+        #     # print('observation["left_shoulder_rgb"] shape = ', observation["left_shoulder_rgb"].shape, file=file)
+        #     # print('observation["left_shoulder_point_cloud"] type = ', type(observation["left_shoulder_point_cloud"]), file=file)
+        #     # print('observation["left_shoulder_point_cloud"] shape = ', observation["left_shoulder_point_cloud"].shape, file=file)
+        #     # print('observation["left_shoulder_camera_intrinsics"] type = ', type(observation["left_shoulder_camera_intrinsics"]), file=file)
+        #     # print('observation["left_shoulder_camera_intrinsics"] shape = ', observation["left_shoulder_camera_intrinsics"].shape, file=file)
+        #     # print('observation["ignore_collisions"] type = ', type(observation["ignore_collisions"]), file=file)
+        #     # print('observation["ignore_collisions"] shape = ', observation["ignore_collisions"].shape, file=file)
+        #     # print('step = ', step, file=file)
+        #     # print('observation["ignore_collisions"]= ', observation["ignore_collisions"], file=file)
+        #     # print('pred_distri = ', pred_distri, file=file)
+        #     # print('observation["low_dim_state"]= ', observation["low_dim_state"], file=file)
+        #     print('observation', observation, file=file)
+        #     print(file=file)
+        
+
             
             
         # keys_to_remove = [
@@ -974,7 +986,6 @@ class SAM2Act_Agent:
                 pred_coll[0].cpu().numpy(),
             )
         )
-        # print('return value')
         if pred_distri:
             x_distri = rot_grip_q[
                 0,

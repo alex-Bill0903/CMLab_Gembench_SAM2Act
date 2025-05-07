@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-def process_image(np_img, device, scale=0.5):
+from scipy.ndimage import zoom
+def process_image(np_img, scale=0.5):
     """
     將輸入的 numpy 陣列圖片縮放並轉換為新的 numpy 陣列。
     
@@ -26,14 +27,18 @@ def process_image(np_img, device, scale=0.5):
     
     return np.transpose(img_resized, (2, 0, 1))  # (H, W, C) -> (C, H, W)
 
-from scipy.ndimage import zoom
-
 def resize_point_cloud(pc, scale=0.5):
     """
-    將單張點雲圖片（numpy array, shape (256,256,3)）縮小到 (128,128,3)
-    使用 scipy.ndimage.zoom 進行線性插值。
+    將單張點雲 (H, W, 3) 下採樣到 (new_H, new_W, 3)，
+    並返回 (C, new_H, new_W) 的 numpy array。
+    
+    使用最近鄰插值避免產生不真實的中間點。
     """
-    # scale factors: height and width 乘上 scale，通道保持1
+    # (height, width, channel)
     scale_factors = (scale, scale, 1)
-    pc_resized = zoom(pc, scale_factors, order=1)  # order=1 為線性插值
-    return np.transpose(pc_resized, (2, 0, 1))
+    # order=0 → nearest-neighbor interpolation
+    pc_resized = zoom(pc, scale_factors, order=0)
+    
+    # 轉成 (C, H, W)
+    pc_resized = np.transpose(pc_resized, (2, 0, 1))
+    return pc_resized

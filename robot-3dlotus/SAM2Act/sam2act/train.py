@@ -36,6 +36,7 @@ from sam2act.utils.rvt_utils import (
     load_agent_only_model,
     RLBENCH_TASKS,
     GEMBENCH_TASKS,
+    SPECIAL_TASKS,
 )
 from sam2act.utils.peract_utils import (
     CAMERAS,
@@ -162,6 +163,8 @@ def get_tasks(exp_cfg):
         tasks = RLBENCH_TASKS
     elif parsed_tasks[0] == "gembench":
         tasks = GEMBENCH_TASKS
+    elif parsed_tasks[0] == "special":
+        tasks = SPECIAL_TASKS
     else:
         tasks = parsed_tasks
     return tasks
@@ -404,6 +407,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--log-dir", type=str, default="runs")
     parser.add_argument("--with-eval", action="store_true", default=False)
+    parser.add_argument("--train_iter", type=int, default="160000")
     
     parser.add_argument("--pretrain_path", type=str, default="", help="Path to pretrained model weights to load before training")
 

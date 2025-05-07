@@ -34,6 +34,15 @@ from genrobo3d.train.datasets.common import gen_seq_masks
 from genrobo3d.evaluation.common import write_to_file
 from genrobo3d.utils.resize_input_rgb_pc import process_image, resize_point_cloud
 
+from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+
+import re
+def split_instructions(s):
+    # 使用正則表達式分割，處理逗號、then 及其組合
+    parts = re.split(r'\s*(?:,+\s*then\s*|then|,)\s*', s)
+    # 去除空格並過濾空元素
+    return [part.strip() for part in parts if part.strip()]
+
 
 class Arguments(tap.Tap):
     exp_config: str
@@ -111,13 +120,44 @@ class Actioner(object):
         ### my load agent ###
         from sam2act.eval import load_agent
         self.agent = load_agent(
-            model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_89.pth',                # e.g., self.model_path
+            # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_89.pth',               # e.g., self.model_path
+            model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_12epoch.pth', 
+            # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_0epoch.pth',     
+            # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_special_26.pth',
             exp_cfg_path=None,            # e.g., self.exp_cfg_path
             mvt_cfg_path=None,            # e.g., self.mvt_cfg_path
             eval_log_dir='SAM2Act/sam2act/runs/sam2act_rlbench/eval/test/1',            # e.g., self.eval_log_dir
             device=0,                    # e.g., 整數，將被轉成 f"cuda:{device}"
             use_input_place_with_mean=False,
         )
+        
+        # 初始化 Gemma 3 LLM pipeline，用於拆分 instructions
+        # 需要事先執行: huggingface-cli login
+
+        # model_id = "google/gemma-3-1b-it"
+        # splitter_model = AutoModelForCausalLM.from_pretrained(
+        #     model_id,
+        #     device_map="auto",
+        #     torch_dtype=torch.bfloat16,
+        #     use_auth_token=True,
+        #     trust_remote_code=True       # 信任遠端程式碼
+        # )
+        # splitter_tokenizer = AutoTokenizer.from_pretrained(
+        #     model_id,
+        #     padding_side="left",
+        #     truncation_side="left",
+        #     trust_remote_code=True       # 同樣信任遠端程式碼
+        # )
+        # self.splitter = pipeline(
+        #     "text-generation",
+        #     model=splitter_model,
+        #     tokenizer=splitter_tokenizer
+        # )
+        
+        self._episode_length = 25
+        self.init_gripper_pose_isSet = False
+        self.init_gripper_pose = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0])
+
         ### my load agent ###
 
     def _get_mask_with_label_ids(self, sem, label_ids):
@@ -361,6 +401,263 @@ class Actioner(object):
     #     #     print("~~~~~~~~~~~~~~~~~~")
     #     return out
     
+    # def predict(
+    #     self, task_str=None, variation=None, step_id=None, obs_state_dict=None, 
+    #     episode_id=None, instructions=None,
+    # ):
+    #     """
+    #     根據輸入的 obs_state_dict，將資料拆解成 4 張影像／點雲，再組成 policy 所需的觀測輸入，
+    #     然後呼叫 agent.act 得到 ActResult，最後擷取前 8 個 action 元素，並回傳 dict 格式。
+        
+    #     輸入：
+    #     - obs_state_dict: dict，包含 keys ['rgb', 'depth', 'pc', 'arm_links_info', 'gt_mask', 'gripper']
+    #         * rgb shape: (4, 256, 256, 3)
+    #         * pc shape: (4, 256, 256, 3)
+    #         * gripper: 8 維向量，其中第 8 個數值是 gripper 的開合狀態（但此處我們不用直接用）
+        
+    #     policy 觀測輸入的 keys：
+    #     'left_shoulder_rgb', 'left_shoulder_point_cloud',
+    #     'right_shoulder_rgb', 'right_shoulder_point_cloud',
+    #     'wrist_rgb', 'wrist_point_cloud',
+    #     'front_rgb', 'front_point_cloud',
+    #     'ignore_collisions', 'low_dim_state', 'lang_goal_tokens'
+        
+    #     輸出：
+    #     - dict，包含 'action'，其 value 為 shape (8,) 的 numpy array
+    #     """
+    #     # 將 4 張 rgb 和 4 張 point cloud 分別拆解
+    #     rgb = obs_state_dict.get("rgb")
+    #     pc = obs_state_dict.get("pc")
+        
+    #     # 檢查資料完整性
+    #     if rgb is None or pc is None:
+    #         raise ValueError("obs_state_dict must contain 'rgb' and 'pc' keys")
+    #     if rgb.shape[0] != 4 or pc.shape[0] != 4:
+    #         raise ValueError("Expected 4 images for 'rgb' and 4 for 'pc'")
+        
+    #     # 設定縮放比例, 256*0.5 = 128
+    #     scale = 0.5
+
+    #     policy_obs = {
+    #         "left_shoulder_rgb": [process_image(rgb[0], scale)],
+    #         "left_shoulder_point_cloud": [resize_point_cloud(pc[0], scale)],
+    #         "right_shoulder_rgb": [process_image(rgb[1], scale)],
+    #         "right_shoulder_point_cloud": [resize_point_cloud(pc[1], scale)],
+    #         "wrist_rgb": [process_image(rgb[2], scale)],
+    #         "wrist_point_cloud": [resize_point_cloud(pc[2], scale)],
+    #         "front_rgb": [process_image(rgb[3], scale)],
+    #         "front_point_cloud": [resize_point_cloud(pc[3], scale)],
+    #         "ignore_collisions": [[0.]]
+    #     }
+                
+  
+        
+    #     # 3. 由 gripper 取得 low_dim_state
+    #     # gripper: 8 維向量，最後一個數值代表 gripper_open (1 或 0)
+    #     gripper_input = obs_state_dict.get("gripper")
+    #     if gripper_input is None:
+    #         raise ValueError("obs_state_dict 缺少 'gripper' 資料")
+    #     gripper_open = gripper_input[-1]
+    #     # 計算 time 參數，假設 self._episode_length 為總步數
+    #     time_param = (1. - (step_id / float(25 - 1))) * 2 - 1.
+    #     # 組成 low_dim_state
+    #     low_dim_state = [np.array([gripper_open, 0.0, 0.0, time_param], dtype=np.float32)]
+    #     policy_obs["low_dim_state"] = low_dim_state
+
+
+    #     # 4. 取得 lang_goal_tokens，利用 clip.tokenize 處理 instructions
+    #     original_instructions = None
+    #     selected_instruction = None
+    #     if isinstance(instructions, list):
+    #         original_instructions = instructions.copy()
+    #         # TODO: simply use the first one (might be better to use the longest one)
+    #         selected_instruction = instructions[0]
+    #         # Choose the instruction string with the maximum length
+    #         # selected_instruction = max(instructions, key=len)
+    #         # all concrecated instructions
+    #         # selected_instruction = ", ".join(instructions)
+            
+    #     # 將 log 寫入指定資料夾（使用 JSON 格式）
+    #     log_base_dir = os.path.join("data", "experiments", "gembench", "3dlotus", "v1", "preds", "instruction_log")
+    #     os.makedirs(log_base_dir, exist_ok=True)
+    #     log_file_path = os.path.join(log_base_dir, f"{task_str}+{variation}.json")
+
+    #     # 若檔案存在則讀取，否則初始化空資料
+    #     if os.path.exists(log_file_path):
+    #         with open(log_file_path, "r", encoding="utf-8") as f:
+    #             log_data = json.load(f)
+    #     else:
+    #         log_data = {
+    #             "task_str": task_str,
+    #             "variation": variation,
+    #             "original_instructions": original_instructions,
+    #             "steps": {}
+    #         }
+
+    #     # 更新該 step_id 對應的選擇 instruction
+    #     log_data["steps"][str(step_id)] = {
+    #         "selected_instruction": selected_instruction
+    #     }
+
+    #     # 寫回 JSON 檔案
+    #     with open(log_file_path, "w", encoding="utf-8") as f:
+    #         json.dump(log_data, f, indent=2, ensure_ascii=False)
+            
+    #     from clip import tokenize
+    #     if selected_instruction is not None:
+    #         lang_goal_tokens = tokenize([selected_instruction])
+    #     else:
+    #         lang_goal_tokens = np.array([])
+    #     policy_obs["lang_goal_tokens"] = lang_goal_tokens
+        
+        
+    #     # 呼叫 policy 函式 act，load agent
+    #     # from sam2act.eval import load_agent
+    #     # agent = load_agent(
+    #     #     model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_89.pth',                # e.g., self.model_path
+    #     #     exp_cfg_path=None,            # e.g., self.exp_cfg_path
+    #     #     mvt_cfg_path=None,            # e.g., self.mvt_cfg_path
+    #     #     eval_log_dir='SAM2Act/sam2act/runs/sam2act_rlbench/eval/test/1',            # e.g., self.eval_log_dir
+    #     #     device=0,                    # e.g., 整數，將被轉成 f"cuda:{device}"
+    #     #     use_input_place_with_mean=False,
+    #     # )
+        
+       
+    #     prepped_data = {k: torch.tensor(np.array([v]), device=self.device) for k, v in policy_obs.items()}
+    #     act_result = self.agent.act(step=step_id, observation=prepped_data, deterministic=True)
+        
+    #     # 擷取 act_result.action 前 8 個資訊（預期 act_result.action 為 numpy array）
+    #     full_action = act_result.action  # 例如 shape 為 (N,) 的 numpy array
+    #     action = full_action[:8]
+    #     # action[2] = max(action[2], self.TABLE_HEIGHT+0.005)
+    #     # print("action = ", action)
+    #     # 回傳 predict 的格式
+    #     return {"action": action}
+    
+    # def predict(
+    #     self, task_str=None, variation=None, step_id=None, obs_state_dict=None, 
+    #     episode_id=None, instructions=None,
+    # ):
+    #     """
+    #     透過 LLM 拆分指令成子任務，並根據 step_id 分配對應的子指令；
+    #     同時記錄原始與子指令對應資訊至 JSON 檔。
+    #     """
+    #     # 1. 基本檢查與影像／點雲前處理
+    #     rgb = obs_state_dict.get("rgb")
+    #     pc = obs_state_dict.get("pc")
+    #     if rgb is None or pc is None or rgb.shape[0] != 4 or pc.shape[0] != 4:
+    #         raise ValueError("obs_state_dict must contain 4 'rgb' and 4 'pc' images")
+
+    #     scale = 0.5
+    #     policy_obs = {
+    #         "left_shoulder_rgb": [process_image(rgb[0], scale)],
+    #         "left_shoulder_point_cloud": [resize_point_cloud(pc[0], scale)],
+    #         "right_shoulder_rgb": [process_image(rgb[1], scale)],
+    #         "right_shoulder_point_cloud": [resize_point_cloud(pc[1], scale)],
+    #         "wrist_rgb": [process_image(rgb[2], scale)],
+    #         "wrist_point_cloud": [resize_point_cloud(pc[2], scale)],
+    #         "front_rgb": [process_image(rgb[3], scale)],
+    #         "front_point_cloud": [resize_point_cloud(pc[3], scale)],
+    #         "ignore_collisions": [[0.]]
+    #     }
+
+    #     # 2. low_dim_state
+    #     gripper_input = obs_state_dict.get("gripper")
+    #     if gripper_input is None:
+    #         raise ValueError("obs_state_dict 缺少 'gripper' 資料")
+    #     gripper_open = gripper_input[-1]
+    #     time_param = (1. - (step_id / float(self._episode_length - 1))) * 2 - 1.
+    #     policy_obs["low_dim_state"] = [np.array([gripper_open, 0.0, 0.0, time_param], dtype=np.float32)]
+
+    #     # 3. 處理原始 instructions
+    #     if instructions is None:
+    #         original_instructions = []
+    #     elif isinstance(instructions, list):
+    #         original_instructions = instructions.copy()
+    #     else:
+    #         original_instructions = [instructions]
+
+    #     # 4. 使用 LLM 拆分成子指令
+    #     #    我們要求 LLM 回傳 {"subinstructions": [...], "num_subinstructions": N}
+    #     prompt = (
+    #         "Split the following list of semantically equivalent robot instructions into "
+    #         "atomic actions. Return a JSON object with two fields:\n"
+    #         "1) subinstructions: an array of strings, each a single action;\n"
+    #         "2) num_subinstructions: the total number of actions.\n\n"
+    #         f"Instructions: {json.dumps(original_instructions, ensure_ascii=False)}"
+    #     )
+    #     # 呼叫 pipeline
+    #     llm_out = self.splitter(
+    #         prompt,
+    #         max_new_tokens=128,
+    #         do_sample=False
+    #     )
+    #     generated = llm_out[0]["generated_text"]
+    #     fallback_used = False
+    #     try:
+    #         # 移除 prompt 文字，留下 JSON
+    #         json_part = generated.replace(prompt, "", 1).strip()
+    #         result = json.loads(json_part)
+    #         subinstructions = result["subinstructions"]
+    #         num_sub = int(result["num_subinstructions"])
+    #         if not isinstance(subinstructions, list) or num_sub != len(subinstructions):
+    #             raise ValueError("Invalid structure or count mismatch")
+    #     except Exception:
+    #         # fallback: 按行分割
+    #         fallback_used = True
+    #         lines = generated.splitlines()
+    #         subinstructions = [ln.strip("- ").strip() for ln in lines if ln.strip()]
+    #         num_sub = len(subinstructions)
+
+    #     # 5. 若只有一個子指令，複製滿整個 episode
+    #     if num_sub <= 1:
+    #         num_sub = 1
+    #         subinstructions = subinstructions or [""]
+    #         subinstructions = [subinstructions[0]] * self._episode_length
+
+    #     # 6. 計算每個子指令對應的步數區間
+    #     steps_per = float(self._episode_length) / num_sub
+    #     idx = min(int(step_id // steps_per), num_sub - 1)
+    #     selected_instruction = subinstructions[idx]
+
+    #     # 5. 紀錄 JSON 檔
+    #     log_dir = os.path.join(
+    #         "data", "experiments", "gembench", "3dlotus", "v1", "preds", "instruction_log"
+    #     )
+    #     os.makedirs(log_dir, exist_ok=True)
+    #     log_path = os.path.join(log_dir, f"{task_str}+{variation}.json")
+    #     # 讀取或初始化
+    #     if os.path.exists(log_path):
+    #         with open(log_path, 'r', encoding='utf-8') as f:
+    #             log = json.load(f)
+    #     else:
+    #         log = {
+    #             "task_str": task_str,
+    #             "variation": variation,
+    #             "original_instructions": original_instructions,
+    #             "subinstructions": subinstructions,
+    #             "fallback_used": fallback_used,
+    #             "steps": {}
+    #         }
+    #     # 更新此 step
+    #     log["steps"][str(step_id)] = {"selected": selected_instruction}
+    #     with open(log_path, 'w', encoding='utf-8') as f:
+    #         json.dump(log, f, ensure_ascii=False, indent=2)
+
+    #     from clip import tokenize
+    #     # 6. CLIP tokenize
+    #     if selected_instruction:
+    #         lang_goal_tokens = tokenize([selected_instruction])
+    #     else:
+    #         lang_goal_tokens = np.array([])
+    #     policy_obs["lang_goal_tokens"] = lang_goal_tokens
+
+    #     # 7. 呼叫 agent
+    #     prepped = {k: torch.tensor(np.array([v]), device=self.device) for k, v in policy_obs.items()}
+    #     act_result = self.agent.act(step=step_id, observation=prepped, deterministic=True)
+    #     action = act_result.action[:8]
+    #     return {"action": action}
+    
     def predict(
         self, task_str=None, variation=None, step_id=None, obs_state_dict=None, 
         episode_id=None, instructions=None,
@@ -407,7 +704,7 @@ class Actioner(object):
             "wrist_point_cloud": [resize_point_cloud(pc[2], scale)],
             "front_rgb": [process_image(rgb[3], scale)],
             "front_point_cloud": [resize_point_cloud(pc[3], scale)],
-            "ignore_collisions": [[0.]]
+            "ignore_collisions": [np.array([0.], dtype=np.float32)]
         }
                 
   
@@ -419,27 +716,71 @@ class Actioner(object):
             raise ValueError("obs_state_dict 缺少 'gripper' 資料")
         gripper_open = gripper_input[-1]
         # 計算 time 參數，假設 self._episode_length 為總步數
-        time_param = (1. - (step_id / float(25 - 1))) * 2 - 1.
+        time_param = (1. - (step_id / float(self._episode_length - 1))) * 2 - 1.
+        # if step_id == 0 or step_id == 1:
+        #     time_param = 1.0
+            
+        
         # 組成 low_dim_state
         low_dim_state = [np.array([gripper_open, 0.0, 0.0, time_param], dtype=np.float32)]
         policy_obs["low_dim_state"] = low_dim_state
+        
+        if not self.init_gripper_pose_isSet:
+            self.init_gripper_pose_isSet = True
+            self.init_gripper_pose = gripper_input.copy()
 
-
-        # print("original instructions type = ", type(instructions))
-        # print("original instructions[0] type = ", type(instructions[0]))
-        # print("original instructions = ", instructions)
         # 4. 取得 lang_goal_tokens，利用 clip.tokenize 處理 instructions
+        original_instructions = None
+        filter_instruction = None
         if isinstance(instructions, list):
+            original_instructions = instructions.copy()
             # TODO: simply use the first one (might be better to use the longest one)
-            instructions = instructions[0]
-            # instructions = ", ".join(instructions)
+            filter_instruction = instructions[0]
+            # Choose the instruction string with the maximum length
+            # selected_instruction = max(instructions, key=len)
+            # all concrecated instructions
+            # selected_instruction = ", ".join(instructions)
+        
+        split_instruction_list = split_instructions(filter_instruction)
+        # print("split_instruction_list = ", split_instruction_list)
+        # print("self._episode_length = ", self._episode_length)
+        # print("step_id = ", step_id)
+        # print("index = ", int(step_id / (self._episode_length/len(split_instruction_list))))
+        # stepNumPerSubtask = 3
+        splitInstructionRepeatCount = 1
+        stepNumPerSubtask = int(self._episode_length/len(split_instruction_list)/splitInstructionRepeatCount)
+        selected_instruction = split_instruction_list[ int((step_id/stepNumPerSubtask)%len(split_instruction_list)) ]
             
-        # print("instructions type = ", type(instructions))
-        # print("instructions = ", instructions)
+        # 將 log 寫入指定資料夾（使用 JSON 格式）
+        log_base_dir = os.path.join("data", "experiments", "gembench", "3dlotus", "v1", "preds", "instruction_log")
+        os.makedirs(log_base_dir, exist_ok=True)
+        log_file_path = os.path.join(log_base_dir, f"{task_str}+{variation}.json")
+
+        # 若檔案存在則讀取，否則初始化空資料
+        if os.path.exists(log_file_path):
+            with open(log_file_path, "r", encoding="utf-8") as f:
+                log_data = json.load(f)
+        else:
+            log_data = {
+                "task_str": task_str,
+                "variation": variation,
+                "init_gripper_pose": self.init_gripper_pose.tolist(),
+                "original_instructions": original_instructions,
+                "steps": {}
+            }
+
+        # 更新該 step_id 對應的選擇 instruction
+        log_data["steps"][str(step_id)] = {
+            "selected_instruction": selected_instruction
+        }
+
+        # 寫回 JSON 檔案
+        with open(log_file_path, "w", encoding="utf-8") as f:
+            json.dump(log_data, f, indent=2, ensure_ascii=False)
             
         from clip import tokenize
-        if instructions is not None:
-            lang_goal_tokens = tokenize([instructions])
+        if selected_instruction is not None:
+            lang_goal_tokens = tokenize([selected_instruction])
         else:
             lang_goal_tokens = np.array([])
         policy_obs["lang_goal_tokens"] = lang_goal_tokens
@@ -464,9 +805,64 @@ class Actioner(object):
         full_action = act_result.action  # 例如 shape 為 (N,) 的 numpy array
         action = full_action[:8]
         # action[2] = max(action[2], self.TABLE_HEIGHT+0.005)
-        # print("action = ", action)
+        # print(task_str, variation, episode_id, 'previous action = ', gripper_input)
+        # print(task_str, variation, episode_id, "action = ", action)
+        # print("~~~~~~")
         # 回傳 predict 的格式
+        
+        ####### initial pose #########
+        if (step_id+1) % stepNumPerSubtask == 0: # because 0-indexed, step_id+1 == 1, 2, 3, ...
+            print(task_str, variation, episode_id, f"step'{step_id} init!!")
+            action = self.init_gripper_pose # return to initial pose
+        ####### initial pose #########
+        
+        taskvar = f'{task_str}+{variation}'
+        batch = self.preprocess_obs(
+            taskvar, step_id, obs_state_dict,
+        )
+        
+        if self.args.save_obs_outs_dir is not None:
+            # 1. 組出 task+variation 這層資料夾
+            task_dir = os.path.join(
+                self.args.save_obs_outs_dir,
+                f"{task_str}+{variation}"
+            )
+            # 2. 再組出 episode_id 這層資料夾
+            episode_dir = os.path.join(task_dir, str(episode_id))
+
+            # 3. 確保資料夾存在（exist_ok=True 不會在已存在時丟錯）
+            os.makedirs(episode_dir, exist_ok=True)
+
+            # 4. 最後用 step_id 作為檔名儲存
+            file_name = f"{step_id}.npy"
+            save_path = os.path.join(episode_dir, file_name)
+
+            # 5. 儲存
+            np.save(
+                save_path,
+                {
+                    'batch': {
+                        k: v.data.cpu().numpy() if isinstance(v, torch.Tensor) else v
+                        for k, v in batch.items()
+                    },
+                    'obs': obs_state_dict,
+                    'action': action
+                }
+            )
+        # print('action = ', action)
+        # print('action type = ', type(action))
+        # print('action[0] type = ', type(action[0]))
+        # action = [0.20725445449352264,
+        #     -0.3063616156578064,
+        #     0.8873884081840515,
+        #     -0.21263110997159382,
+        #     -0.6743797232066278,
+        #     0.6743797232066279,
+        #     0.21263110997159385,
+        #     0.0]
         return {"action": action}
+    
+
 
 
 def evaluate_actioner(args):    

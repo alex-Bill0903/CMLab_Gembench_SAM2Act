@@ -283,6 +283,11 @@ GEMBENCH_TASKS = [
     "stack_blocks+39",
 ]
 
+SPECIAL_TASKS = [
+    "reach_and_drag_peract+14",
+    "reach_and_drag_peract+18",
+]
+
 def load_agent(agent_path, agent=None, only_epoch=False):
     if isinstance(agent, PreprocessAgent2):
         assert not only_epoch

@@ -5,6 +5,6 @@
         "robot-3dlotus/SAM2Act/sam2act/data_gembench",
         "robot-3dlotus/SAM2Act/sam2act/data_rlbench18tasks",
         "robot-3dlotus/SAM2Act/sam2act/runs",
-        "robot-3dlotus/data",
+        "robot-3dlotus/data"
     ]
 }

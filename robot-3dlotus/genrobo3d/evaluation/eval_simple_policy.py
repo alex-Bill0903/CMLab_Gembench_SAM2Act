@@ -121,8 +121,8 @@ class Actioner(object):
         from sam2act.eval import load_agent
         self.agent = load_agent(
             # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_89.pth',               # e.g., self.model_path
-            model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_12epoch.pth', 
-            # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_0epoch.pth',     
+            # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_12epoch.pth', 
+            model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_0epoch.pth',     
             # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_special_26.pth',
             exp_cfg_path=None,            # e.g., self.exp_cfg_path
             mvt_cfg_path=None,            # e.g., self.mvt_cfg_path

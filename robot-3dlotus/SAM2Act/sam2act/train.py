@@ -35,6 +35,8 @@ from sam2act.utils.rvt_utils import (
     load_agent,
     load_agent_only_model,
     RLBENCH_TASKS,
+    GEMBENCH_TASKS,
+    SPECIAL_TASKS,
 )
 from sam2act.utils.peract_utils import (
     CAMERAS,
@@ -156,7 +158,13 @@ def save_agent(agent, path, epoch):
 def get_tasks(exp_cfg):
     parsed_tasks = exp_cfg.tasks.split(",")
     if parsed_tasks[0] == "all":
+        tasks = RLBENCH_TASKS + GEMBENCH_TASKS
+    elif parsed_tasks[0] == "rlbench":
         tasks = RLBENCH_TASKS
+    elif parsed_tasks[0] == "gembench":
+        tasks = GEMBENCH_TASKS
+    elif parsed_tasks[0] == "special":
+        tasks = SPECIAL_TASKS
     else:
         tasks = parsed_tasks
     return tasks
@@ -307,6 +315,11 @@ def experiment(cmd_args, devices, rank, node_rank, world_size):
 
     else:
         assert False, "Incorrect agent"
+        
+    if cmd_args.pretrain_path:
+        if rank == 0:
+            print(f"Loading pretrained weights from {cmd_args.pretrain_path}")
+        load_agent_only_model(cmd_args.pretrain_path, agent)
 
     start_epoch = 0
     end_epoch = EPOCHS
@@ -394,6 +407,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--log-dir", type=str, default="runs")
     parser.add_argument("--with-eval", action="store_true", default=False)
+    parser.add_argument("--train_iter", type=int, default="160000")
+    
+    parser.add_argument("--pretrain_path", type=str, default="", help="Path to pretrained model weights to load before training")
+
 
     cmd_args = parser.parse_args()
     del (

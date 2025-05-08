@@ -84,7 +84,6 @@ class TaskRecorder(object):
         import shutil
         import cv2
         import uuid
-        print('Converting to video ...')
         path = Path(path)
         path.mkdir(exist_ok=True)
 

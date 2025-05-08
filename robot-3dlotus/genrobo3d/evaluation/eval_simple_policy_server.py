@@ -22,6 +22,7 @@ from genrobo3d.rlbench.recorder import (
 from genrobo3d.train.utils.misc import set_random_seed
 from genrobo3d.evaluation.common import write_to_file
 from genrobo3d.evaluation.eval_simple_policy import Actioner
+from genrobo3d.utils.save_instruction import save_instruction
 
 
 class ServerArguments(tap.Tap):
@@ -52,6 +53,7 @@ class ServerArguments(tap.Tap):
     video_resolution: int = 480
 
     real_robot: bool = False
+    
 
 
 def consumer_fn(args, batch_queue, result_queues):
@@ -101,6 +103,8 @@ def producer_fn(proc_id, k_res, args, taskvar, pred_file, batch_queue, result_qu
     task_type = task_file_to_task_class(task_str)
     task = env.env.get_task(task_type)
     task.set_variation(variation)  # type: ignore
+    
+    
 
     if args.record_video:
         # Add a global camera to the scene
@@ -209,11 +213,15 @@ def producer_fn(proc_id, k_res, args, taskvar, pred_file, batch_queue, result_qu
                 print(taskvar, demo_id, step_id, e)
                 reward = 0
                 break
+
+        
         
         if args.record_video: # and reward < 1:
             save_video_dir = os.path.join(video_log_dir, f"{demo_id}_SR{reward}")
             os.makedirs(save_video_dir, exist_ok=True)
             tr.save(os.path.join(save_video_dir))
+
+            save_instruction(taskvar, instructions)
             
             with open(os.path.join(save_video_dir, "instruction.json"), 'w') as f:
                 json.dump(instructions, f, indent=2)

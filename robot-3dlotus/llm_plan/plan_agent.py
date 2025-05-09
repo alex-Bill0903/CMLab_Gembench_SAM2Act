@@ -47,7 +47,7 @@ class PlanAgent(ABC):
 class GemmaPlanAgent(PlanAgent):
     def __init__(self):
         super().__init__()
-        model_id = "google/gemma-3-12b-it"
+        model_id = "google/gemma-3-4b-it"
         self.processor = AutoProcessor.from_pretrained(model_id)
         # self.model = AutoModelForImageTextToText.from_pretrained(model_id)
         self.model = Gemma3ForConditionalGeneration.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map="auto").eval()

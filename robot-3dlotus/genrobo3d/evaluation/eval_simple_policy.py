@@ -34,10 +34,10 @@ from genrobo3d.train.datasets.common import gen_seq_masks
 from genrobo3d.evaluation.common import write_to_file
 from genrobo3d.utils.resize_input_rgb_pc import process_image, resize_point_cloud
 
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+from llm_plan.plan_agent import GemmaPlanAgent
 
 import re
-def split_instructions(s):
+def naive_split_instructions(s):
     # 使用正則表達式分割，處理逗號、then 及其組合
     parts = re.split(r'\s*(?:,+\s*then\s*|then|,)\s*', s)
     # 去除空格並過濾空元素
@@ -122,7 +122,7 @@ class Actioner(object):
         self.agent = load_agent(
             # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_89.pth',               # e.g., self.model_path
             # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_12epoch.pth', 
-            model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_0epoch.pth',     
+            model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_gembench_2epoch.pth',     
             # model_path='SAM2Act/sam2act/runs/sam2act_rlbench/model_special_26.pth',
             exp_cfg_path=None,            # e.g., self.exp_cfg_path
             mvt_cfg_path=None,            # e.g., self.mvt_cfg_path
@@ -130,29 +130,6 @@ class Actioner(object):
             device=0,                    # e.g., 整數，將被轉成 f"cuda:{device}"
             use_input_place_with_mean=False,
         )
-        
-        # 初始化 Gemma 3 LLM pipeline，用於拆分 instructions
-        # 需要事先執行: huggingface-cli login
-
-        # model_id = "google/gemma-3-1b-it"
-        # splitter_model = AutoModelForCausalLM.from_pretrained(
-        #     model_id,
-        #     device_map="auto",
-        #     torch_dtype=torch.bfloat16,
-        #     use_auth_token=True,
-        #     trust_remote_code=True       # 信任遠端程式碼
-        # )
-        # splitter_tokenizer = AutoTokenizer.from_pretrained(
-        #     model_id,
-        #     padding_side="left",
-        #     truncation_side="left",
-        #     trust_remote_code=True       # 同樣信任遠端程式碼
-        # )
-        # self.splitter = pipeline(
-        #     "text-generation",
-        #     model=splitter_model,
-        #     tokenizer=splitter_tokenizer
-        # )
         
         self._episode_length = 25
         self.init_gripper_pose_isSet = False
@@ -730,18 +707,16 @@ class Actioner(object):
             self.init_gripper_pose = gripper_input.copy()
 
         # 4. 取得 lang_goal_tokens，利用 clip.tokenize 處理 instructions
-        original_instructions = None
-        filter_instruction = None
-        if isinstance(instructions, list):
-            original_instructions = instructions.copy()
-            # TODO: simply use the first one (might be better to use the longest one)
-            filter_instruction = instructions[0]
-            # Choose the instruction string with the maximum length
-            # selected_instruction = max(instructions, key=len)
-            # all concrecated instructions
-            # selected_instruction = ", ".join(instructions)
+        original_instructions = instructions.copy()
+   
+
+        split_instruction_list = naive_split_instructions(instructions[0])
         
-        split_instruction_list = split_instructions(filter_instruction)
+        ### LLM split instructions ###
+        # LLM_instruction_split_agent = GemmaPlanAgent()
+        # split_instruction_list = LLM_instruction_split_agent.get_plan(instructions)
+        ### LLM split instructions ###
+        
         # print("split_instruction_list = ", split_instruction_list)
         # print("self._episode_length = ", self._episode_length)
         # print("step_id = ", step_id)

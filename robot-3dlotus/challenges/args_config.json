@@ -1,0 +1,16 @@
+{
+    "expr_dir": "data/experiments/gembench/3dlotus/v1",
+    "ckpt_step": 150000,
+    "device": "cuda",
+    "image_size": [256, 256],
+    "max_tries": 10,
+    "max_steps": 25,
+    "microstep_data_dir": "data/gembench/test_dataset/microsteps/seed200",
+    "seed": 200,
+    "num_workers": 4,
+    "queue_size": 20,
+    "num_demos": 20,
+    "num_ensembles": 1,
+    "record_video": true,
+    "video_dir": "data/experiments/gembench/3dlotus/v1/preds/seed200/record_video"
+  }

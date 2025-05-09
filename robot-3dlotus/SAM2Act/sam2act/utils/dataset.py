@@ -616,11 +616,36 @@ def _add_keypoints_to_replay_temporal(
             prev_action=prev_action,
             episode_length=25,
         )
-        tokens = clip.tokenize([description]).numpy()
+        # print('hello????????? yo')
+        ### original only encode first instruction ###
+        # tokens = clip.tokenize([description]).numpy()
+        ### my add ###
+        import random
+        # print('description = ', description)
+        # print('description[0] = ', description[0])
+        # print('random description = ', random.choice(description))
+        random_index = random.randrange(len(description))
+        tokens = clip.tokenize([description[random_index]]).numpy()
+        ### my add ###
+        
+        
         token_tensor = torch.from_numpy(tokens).to(device)
         with torch.no_grad():
             lang_feats, lang_embs = _clip_encode_text(clip_model, token_tensor)
         obs_dict["lang_goal_embs"] = lang_embs[0].float().detach().cpu().numpy()
+        ### original only encode first instruction ###
+        
+        ## my add ##
+        # description is List[str], e.g. length n_desc
+        # tokens = clip.tokenize(description).numpy()         # shape = (n_desc, seq_len)
+        # token_tensor = torch.from_numpy(tokens).to(device)
+        # with torch.no_grad():
+        #     _, lang_embs = _clip_encode_text(clip_model, token_tensor)
+        # # lang_embs.shape == (n_desc, D)
+        # obs_dict["lang_goal_embs"]  = lang_embs.cpu().numpy()             # save (n_desc, D)
+        ## my add ##
+        
+        
 
         prev_action = np.copy(action)
 
@@ -641,7 +666,10 @@ def _add_keypoints_to_replay_temporal(
             "trans_action_indicies": trans_indicies,
             "rot_grip_action_indicies": rot_grip_indicies,  # rot + grip: 3+1
             "gripper_pose": obs_tp1.gripper_pose,   # 3+4
-            "lang_goal": np.array([description], dtype=object),
+            ### original only encode first instruction ###
+            "lang_goal": np.array([description[random_index]], dtype=object),
+            ### original only encode first instruction ###
+            # "lang_goal": np.array(description, dtype=object),
         }
 
         others.update(final_obs)
@@ -736,7 +764,13 @@ def fill_replay_temporal(
                     continue
 
                 obs = demo[i]
-                desc = descs[0]
+                
+                ### original choose first instruction ###
+                # desc = descs[0]
+                ### original choose first instruction ###
+                # print('descs = ', descs)
+                # print('desc = ', desc)
+                
                 # if our starting point is past one of the keypoints, then remove it
                 while (
                     next_keypoint_idx < len(episode_keypoints)
@@ -760,7 +794,9 @@ def fill_replay_temporal(
                     rotation_resolution,
                     crop_augmentation,
                     next_keypoint_idx=next_keypoint_idx,
-                    description=desc,
+                    ### original choose first instruction ###
+                    description=descs,
+                    ### original choose first instruction ###
                     clip_model=clip_model,
                     device=device,
                 )

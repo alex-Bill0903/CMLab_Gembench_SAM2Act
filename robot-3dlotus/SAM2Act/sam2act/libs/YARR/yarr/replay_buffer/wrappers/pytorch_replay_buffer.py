@@ -37,6 +37,22 @@ class PyTorchIterableReplayDataset(IterableDataset):
     def __len__(self): # enumeration will throw away the last incomplete batch
         return self._num_samples // self._replay_buffer._batch_size
 
+# import numpy as np  
+# class LangAugIterableDataset(IterableDataset):
+#     def __init__(self, base_dataset):
+#         self.base = base_dataset
+
+#     def __iter__(self):
+#         for sample in self.base:  # sample 是 dict，包含 "lang_goal_embs" 與 "lang_goal_texts"
+#             embs = sample.pop("lang_goal_embs")       # shape = (n_desc, D)
+#             texts = sample.pop("lang_goal_texts")     # shape = (n_desc,)
+#             # randomly choose one of the n_desc
+#             idx = np.random.randint(0, embs.shape[0])
+#             # put it back to sample
+#             sample["lang_goal_emb"]  = embs[idx]     # shape = (D,)
+#             sample["lang_goal_text"] = texts[idx]    # str
+#             yield sample
+
 class PyTorchReplayBuffer(WrappedReplayBuffer):
     """Wrapper of OutOfGraphReplayBuffer with an in graph sampling mechanism.
 
@@ -56,9 +72,29 @@ class PyTorchReplayBuffer(WrappedReplayBuffer):
         self._sample_mode = sample_mode
         self._sample_distribution_mode = sample_distribution_mode
 
+    ## origianl code ###
     def dataset(self) -> DataLoader:
         d = PyTorchIterableReplayDataset(self._replay_buffer, self._sample_mode, self._sample_distribution_mode)
 
         # Batch size None disables automatic batching
         return DataLoader(d, batch_size=None, pin_memory=True,
                           num_workers=self._num_workers)
+    ## origianl code ###
+    
+    # def dataset(self) -> DataLoader:
+    #     # 1) original iterable dataset
+    #     base_ds = PyTorchIterableReplayDataset(
+    #         self._replay_buffer,
+    #         sample_mode=self._sample_mode,
+    #         sample_distribution_mode=self._sample_distribution_mode,
+    #     )
+    #     # 2) randomly choose one of the n_desc
+    #     aug_ds = LangAugIterableDataset(base_ds)
+
+    #     # 3) return DataLoader
+    #     return DataLoader(
+    #         aug_ds,
+    #         batch_size=None,
+    #         pin_memory=True,
+    #         num_workers=self._num_workers,
+    #     )
